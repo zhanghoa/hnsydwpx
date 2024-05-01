@@ -1,0 +1,64 @@
+// ==UserScript==
+// @name         学习完成检查
+// @namespace    http://your.website.com
+// @version      0.1
+// @description  检查网页中的所有class="percent"元素是否为100%，如果是则弹出学习已完成的对话框，否则点击第一个不是100%的元素，然后监控新页面中指定元素的进度，如果是100%则保持在当前页面，否则返回前一页面，并再次检查class="percent"元素状态，并输出结果到控制台。
+// @author       Your Name
+// @match        http://your.website.com/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // 延时函数
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 检查class="percent"元素状态
+    async function checkPercentElements() {
+        // 获取所有class="percent"元素
+        var percentElements = document.querySelectorAll(".percent");
+
+        // 检查是否所有元素都是100%
+        var all100Percent = Array.from(percentElements).every(function(element) {
+            return element.textContent.trim() === "100%";
+        });
+
+        console.log("元素检查结果：", all100Percent ? "所有元素都是100%" : "有元素不是100%");
+
+        // 如果所有元素都是100%
+        if (all100Percent) {
+            alert("学习已完成");
+            // 弹出对话框或者执行其他操作
+        } else {
+            // 点击第一个不是100%的元素
+            var firstNot100PercentElement = Array.from(percentElements).find(function(element) {
+                return element.textContent.trim() !== "100%";
+            });
+            if (firstNot100PercentElement) {
+                firstNot100PercentElement.click();
+
+                // 延时10秒
+                await delay(10000);
+
+                // 检查新页面中的进度是否为100%
+                var progressElement = document.getElementById("progressshow");
+                if (!progressElement || progressElement.textContent.trim() === "100%") {
+                    // 如果没有找到元素或者进度是100%，则退回前一个页面
+                    history.back();
+                    // 再次检查class="percent"元素状态
+                    await checkPercentElements();
+                } else {
+                    console.log("监控结果：", "新页面中指定元素的进度不是100%");
+                }
+            } else {
+                console.log("监控结果：", "没有找到不是100%的元素");
+            }
+        }
+    }
+
+    // 初始检查class="percent"元素状态
+    checkPercentElements();
+})();
